@@ -1,89 +1,130 @@
 const drawing = document.querySelector('#drawing')
-const ColorBox = [[223, 12, 23,1], [132, 223, 12,1], [163, 49, 4,1], [200, 8, 238,1], [26, 160, 238,1], [255,255,255,1]] //红 黄绿色  砖红色 紫色 蓝色 白色
+const ColorBox = [
+	[223, 12, 23, 1],
+	[132, 223, 12, 1],
+	[163, 49, 4, 1],
+	[200, 8, 238, 1],
+	[26, 160, 238, 1],
+	[255, 255, 255, 1]
+] //红 黄绿色  砖红色 紫色 蓝色 白色
 resizeDra()
 let context
 
 
 // 一个烟花点，用来描述烟花店的属性和行为
 class FirePoint {
-	constructor(originx, originy, angle) {
-		this.angle = angle //偏移角
+	constructor(originx, originy, angle, v, color) {
+		this.angle = angle || 0 //偏移角
 		this.originx = originx //其实x坐标
 		this.originy = originy //起始y坐标
-		this.g = 0.1 //重力加速度
+		this.g = 0.05 //重力加速度
 		this.v = 0 //火星移动速度
 		this.size = 0 //火星半径
 		this.timeIndex = 0 //时间标识
-		this.color = [],//['red','green','blue','opacity']
-		this.type = 'FirePoint'
-		this.keepTime=40//颜色多少时间后会开始变淡
-		this.delFlag=false
+		this.color = [], //['red','green','blue','opacity']
+			this.type = 'FirePoint'
+		this.keepTime = 35 //颜色多少时间后会开始变淡
+		this.delFlag = false
 		this.randomInit()
+		if (v) this.v = v
+		if (color) this.color = color
 	}
 	// 使用随机值初始化部分参数
 	randomInit() {
-		let v_x = 4,
-			v_y = 4,
+		let v_x = 1,
+			v_y = 2.5,
 			v_r;
 		v_r = Math.random() * v_x
 		this.v = v_r + v_y
-		this.size = Math.random() * 3 + 3
+		this.size = Math.random() * 1 + 2
 		this.randomColor(v_r, v_x) //计算爆炸后一个烟花点的颜色
 	}
-	getColor(){
-		if(this.timeIndex>this.keepTime){
-			this.color[3]-=0.02//以每次0.2的速度不断变淡
-			if(this.color[3]<0) {
-				this.color[3]=0
-				this.delFlag=true
+	getColor() {
+		if (this.timeIndex > this.keepTime) {
+			this.color[3] -= 0.0007 //以每次0.2的速度不断变淡
+			if (this.color[3] < 0) {
+				this.color[3] = 0
+				this.delFlag = true
 			}
 		}
-		return ['rgb(',this.color.join(','),')'].join('')
+		return ['rgb(', this.color.join(','), ')'].join('')
 	}
 	// 得到下秒的烟花点的状态
-	getNextStatus() {
+	getNextStatus(ctr) {
 		// 使用三角函数计算出点击出周围点的圆心坐标
 		let nextX = this.originx + Math.cos(this.angle) * this.v * this.timeIndex //x方向没有重力分量
 		let nextY = this.originy + Math.sin(this.angle) * this.v * this.timeIndex + this.g * (this.timeIndex ** 2) / 2
 		this.timeIndex++
-		return [nextX, nextY, this.size, this.getColor()]
+		let ans = [nextX, nextY, this.size, this.getColor()]
+		if (typeof this.statusCB == 'function') {
+			this.statusCB(ctr, ...ans)
+		}
+		return ans
 	}
 	randomColor(v_r, v_x) {
 		let index = parseInt(v_r * (ColorBox.length - 1) / v_x) //展示速度最快的颜色位于颜料盘最后面
 		this.color = [...ColorBox[index]]
 	}
 }
+// 椭圆形爆炸
+class Ellipse extends FirePoint {
+	constructor(...agr) {
+		super(...agr)
+		this.a = 30 //长轴
+		this.b = 10 //短轴
+		// this.v=1//轴长变化速度
+	}
+	getNextStatus(ctr) {
+		this._a = this.a + this.timeIndex * this.v
+		this._b = this.b + this.timeIndex * this.v
+		let nextx = this.originx + this._a * Math.cos(this.angle)
+		let nexty = this.originy + this._b * Math.sin(this.angle)
+		this.timeIndex++
+		return [nextx, nexty, this.size, this.getColor()]
+	}
+}
 // 未爆炸前的鞭炮
 class ShootPoint extends FirePoint {
 	constructor(...agr) {
 		super(...agr)
-		this.v = 5
-		this.g = .03
-		this.angle = -Math.PI * 0.5
+		this.v = Math.random() * 1 + 5
+		this.g = .02
+		this.angle = -Math.PI * (Math.random() * .1 + .45)
 		this.color = ColorBox[5]
 		this.type = 'ShootPoint'
-		this.keepTime=1000000
+		this.keepTime = 1000000
+		this.t = parseInt(Math.random() * 10 + 50)
+	}
+	createFire(ctr, x, y) {
+		let n = this.t
+		let color = [Math.random() * 255, Math.random() * 255, Math.random() * 255, 1].map(item => parseInt(item))
+		while (n--) {
+			let angle = n / this.t * 2 * Math.PI
+			ctr.allFire.push(new FirePoint(x, y, angle, null, color))
+			// ctr.allFire.push(new Ellipse(x,y,angle))
+		}
+	}
+	statusCB(ctr, x, y) {
+		if (this.timeIndex > 150) {
+			this.delFlag = true
+			this.createFire(ctr, x, y)
+		}
 	}
 }
+
 // 烟花控制器，负责生成和绘制烟花
 class FireCtr {
-	constructor(n, x, y, context) {
+	constructor(x, y, context) {
 		this.x = x
 		this.y = y
 		this.context = context
-		// 如果传入的n非法，则生成随机数目的烟花点
-		if (!n || n < 0) n = parseInt(Math.random() * 10 + 10)
-		this.t = n
-		this.allFire = [new ShootPoint(x, y)] //存储一次烟花绽放作业中的带处理作业
+		this.timeIndex = 0
+		this.allFire = [] //存储一次烟花绽放作业中的带处理作业
+		// for(let i=0;i<4;i++){
+		// 	this.allFire.push(new ShootPoint(w/2,h))
+		// }
+	}
 
-	}
-	createFire(x, y) {
-		let n = this.t
-		while (n--) {
-			let angle = n / this.t * 2 * Math.PI
-			this.allFire.push(new FirePoint(x, y, angle))
-		}
-	}
 	drawing(nextX, nextY, size, color) {
 		this.context.beginPath()
 		this.context.arc(nextX, nextY, size, 0, 2 * Math.PI, false)
@@ -92,20 +133,18 @@ class FireCtr {
 		this.context.fill()
 	}
 	drawAll() {
-		for (let i = 0; i < this.allFire.length; i++) {
+		this.timeIndex++
+		if (this.timeIndex % 30 == 0) {
+			this.allFire.push(new ShootPoint(window.innerWidth / 2, window.innerHeight))
+		}
+		let i = this.allFire.length
+		while (i--) {
 			const item = this.allFire[i]
 			const statusInfo = item.getNextStatus(this)
 			this.drawing.apply(this, statusInfo)
-			if(item.delFlag){
-				this.allFire.splice(i--,1)
-			}
-			if (item.type === 'ShootPoint' && item.timeIndex > 50 * 4) {
-				// debugger
+			if (item.delFlag) {
 				this.allFire.splice(i, 1)
-				i--
-				this.createFire(...statusInfo) //鞭炮飞翔一定距离开始爆炸
-			} 
-
+			}
 		}
 	}
 }
@@ -140,18 +179,13 @@ function fire(e) {
 	cancelAnimationFrame(rafId)
 	let index = 0
 	let [x, y] = getMouseXY(e)
-	let fireCtr = new FireCtr(50, x, y, context) //生成一个烟花，能爆出5十个小点
+	let fireCtr = new FireCtr(x, y, context) //生成一个烟花，能爆出5十个小点
 	let tick = () => {
 		// 生成拖尾的关键代码
-		context.fillStyle = 'rgb(0,0,0,.15)' //使用一个模糊遮罩不断模糊前一秒绘制的东西
-		context.rect(0, 0, window.innerWidth, window.innerHeight)
-		context.fill()
+		context.fillStyle = 'rgb(0,0,0,.18)' //使用一个模糊遮罩不断模糊前一秒绘制的东西
+		context.fillRect(0, 0, window.innerWidth, window.innerHeight)
 		fireCtr.drawAll()
-		if (index++ < 500) {
-			rafId = requestAnimationFrame(tick)
-		} else {
-			cancelAnimationFrame(rafId)
-		}
+		rafId = requestAnimationFrame(tick)
 	}
 	tick()
 }
