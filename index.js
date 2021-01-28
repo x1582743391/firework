@@ -13,18 +13,27 @@ let context
 
 // 一个烟花点，用来描述烟花店的属性和行为
 class FirePoint {
-	constructor(originx, originy, angle, v, color) {
-		this.angle = angle || 0 //偏移角
-		this.originx = originx //其实x坐标
+	constructor({
+		originx,
+		originy,
+		angle = 0,
+		v = 0,
+		color = [],
+		ctr = null
+	}) {
+		this.angle = angle //偏移角
+		this.originx = originx //起始x坐标
 		this.originy = originy //起始y坐标
+		this.ctr = ctr //渲染队列
 		this.g = 0.05 //重力加速度
 		this.v = 0 //火星移动速度
 		this.size = 0 //火星半径
 		this.timeIndex = 0 //时间标识
-		this.color = [], //['red','green','blue','opacity']
-			this.type = 'FirePoint'
+		this.color = [] //['red','green','blue','opacity']
+		this.type = 'FirePoint'
 		this.keepTime = 35 //颜色多少时间后会开始变淡
 		this.delFlag = false
+		this.colorReduce=.0007
 		this.randomInit()
 		if (v) this.v = v
 		if (color) this.color = color
@@ -41,7 +50,7 @@ class FirePoint {
 	}
 	getColor() {
 		if (this.timeIndex > this.keepTime) {
-			this.color[3] -= 0.0007 //以每次0.2的速度不断变淡
+			this.color[3] -= this.colorReduce //以每次0.2的速度不断变淡
 			if (this.color[3] < 0) {
 				this.color[3] = 0
 				this.delFlag = true
@@ -49,16 +58,24 @@ class FirePoint {
 		}
 		return ['rgb(', this.color.join(','), ')'].join('')
 	}
-	// 得到下秒的烟花点的状态
-	getNextStatus(ctr) {
+	move() {
 		// 使用三角函数计算出点击出周围点的圆心坐标
 		let nextX = this.originx + Math.cos(this.angle) * this.v * this.timeIndex //x方向没有重力分量
 		let nextY = this.originy + Math.sin(this.angle) * this.v * this.timeIndex + this.g * (this.timeIndex ** 2) / 2
 		this.timeIndex++
-		let ans = [nextX, nextY, this.size, this.getColor()]
-		if (typeof this.statusCB == 'function') {
-			this.statusCB(ctr, ...ans)
-		}
+		return [nextX, nextY, this.size, this.getColor()]
+
+	}
+	// 得到下秒的烟花点的状态
+	getNextStatus() {
+		let ans=this.move()
+		 this.timeIndex%5==0&&this.type == 'FirePoint' &&this.ctr.allFire.push(new ParticleTrace({
+			originx: ans[0]+Math.random()*10-5.5,
+			originy: ans[1],
+			ctr:this.ctr,
+			color:[...this.color],
+			angle:this.angle
+		}))
 		return ans
 	}
 	randomColor(v_r, v_x) {
@@ -74,7 +91,7 @@ class Ellipse extends FirePoint {
 		this.b = 10 //短轴
 		// this.v=1//轴长变化速度
 	}
-	getNextStatus(ctr) {
+	getNextStatus() {
 		this._a = this.a + this.timeIndex * this.v
 		this._b = this.b + this.timeIndex * this.v
 		let nextx = this.originx + this._a * Math.cos(this.angle)
@@ -83,35 +100,63 @@ class Ellipse extends FirePoint {
 		return [nextx, nexty, this.size, this.getColor()]
 	}
 }
+// 粒子拖尾
+class ParticleTrace extends FirePoint{
+	constructor(...agr){
+		super(...agr)
+		this.v=0.2
+		this.keepTime=3
+		this.colorReduce=0.04
+		this.g=.02
+		this.size=0.08
+		this.type='ParticleTrace'
+		// this.color= [...ColorBox[5]]
+	}
+
+}
 // 未爆炸前的鞭炮
 class ShootPoint extends FirePoint {
 	constructor(...agr) {
 		super(...agr)
 		this.v = Math.random() * 1 + 5
-		this.g = .02
+		this.g = 0.01
 		this.angle = -Math.PI * (Math.random() * .1 + .45)
-		this.color = ColorBox[5]
+		this.color = [...ColorBox[5]]
 		this.type = 'ShootPoint'
 		this.keepTime = 1000000
 		this.t = parseInt(Math.random() * 10 + 50)
 	}
-	createFire(ctr, x, y) {
+	createFire(x, y) {
 		let n = this.t
 		let color = [Math.random() * 255, Math.random() * 255, Math.random() * 255, 1].map(item => parseInt(item))
 		while (n--) {
 			let angle = n / this.t * 2 * Math.PI
-			ctr.allFire.push(new FirePoint(x, y, angle, null, color))
-			// ctr.allFire.push(new Ellipse(x,y,angle))
+			this.ctr.allFire.push(new FirePoint({
+				originx: x,
+				originy: y,
+				angle,
+				color,
+				ctr:this.ctr
+			}))
 		}
 	}
-	statusCB(ctr, x, y) {
+	// 重写获取下一状态的方法，为了生成爆炸特效
+	getNextStatus(){
+		let ans =this.move()
 		if (this.timeIndex > 150) {
 			this.delFlag = true
-			this.createFire(ctr, x, y)
+			this.createFire(ans[0], ans[1])
 		}
+		this.ctr.allFire.push(new ParticleTrace({
+			originx: ans[0]+Math.random()*10-5.5,
+			originy: ans[1],
+			ctr:this.ctr,
+			color:[...this.color],
+			angle:this.angle
+		}))
+		return ans
 	}
 }
-
 // 烟花控制器，负责生成和绘制烟花
 class FireCtr {
 	constructor(x, y, context) {
@@ -120,9 +165,6 @@ class FireCtr {
 		this.context = context
 		this.timeIndex = 0
 		this.allFire = [] //存储一次烟花绽放作业中的带处理作业
-		// for(let i=0;i<4;i++){
-		// 	this.allFire.push(new ShootPoint(w/2,h))
-		// }
 	}
 
 	drawing(nextX, nextY, size, color) {
@@ -135,12 +177,16 @@ class FireCtr {
 	drawAll() {
 		this.timeIndex++
 		if (this.timeIndex % 30 == 0) {
-			this.allFire.push(new ShootPoint(window.innerWidth / 2, window.innerHeight))
+			this.allFire.push(new ShootPoint({
+				originx: window.innerWidth / 2,
+				originy: window.innerHeight,
+				ctr: this
+			}))
 		}
 		let i = this.allFire.length
 		while (i--) {
 			const item = this.allFire[i]
-			const statusInfo = item.getNextStatus(this)
+			const statusInfo = item.getNextStatus()
 			this.drawing.apply(this, statusInfo)
 			if (item.delFlag) {
 				this.allFire.splice(i, 1)
