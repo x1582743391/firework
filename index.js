@@ -11,6 +11,34 @@ resizeDra()
 let context
 
 
+function addMusic(type) {
+	let url = ''
+	let id = ''
+	// 发射
+	if (type == 1) {
+		url = './发射.mp3'
+		if(Math.random()>0.5){
+			url='./发射2.mp3'
+		}
+	} else {
+		// 爆炸
+		url = './爆炸.mp3'
+	}
+	id = Math.random() + ''
+	let ele = document.createElement('audio')
+	ele.id = id
+	ele.src = url
+	ele.autoplay = "autoplay"
+	ele.loop = false
+	ele.addEventListener('ended', () => {
+		console.log('移除')
+		document.body.removeChild(ele)
+	})
+	document.body.appendChild(ele)
+
+
+}
+
 // 一个烟花点，用来描述烟花店的属性和行为
 class FirePoint {
 	constructor({
@@ -33,7 +61,7 @@ class FirePoint {
 		this.type = 'FirePoint'
 		this.keepTime = 35 //颜色多少时间后会开始变淡
 		this.delFlag = false
-		this.colorReduce=.0007
+		this.colorReduce = .001
 		this.randomInit()
 		if (v) this.v = v
 		if (color) this.color = color
@@ -66,16 +94,20 @@ class FirePoint {
 		return [nextX, nextY, this.size, this.getColor()]
 
 	}
+	createParticleTrace(ans){
+		this.ctr.allFire.push(new ParticleTrace({
+			originx: ans[0] + Math.random() * 10 - 5.5,
+			originy: ans[1],
+			ctr: this.ctr,
+			color: [...this.color],
+			angle: this.angle
+		}))
+
+	}
 	// 得到下秒的烟花点的状态
 	getNextStatus() {
-		let ans=this.move()
-		 this.timeIndex%5==0&&this.type == 'FirePoint' &&this.ctr.allFire.push(new ParticleTrace({
-			originx: ans[0]+Math.random()*10-5.5,
-			originy: ans[1],
-			ctr:this.ctr,
-			color:[...this.color],
-			angle:this.angle
-		}))
+		let ans = this.move()
+		this.timeIndex % 8 == 0 && this.type == 'FirePoint' && this.createParticleTrace(ans)
 		return ans
 	}
 	randomColor(v_r, v_x) {
@@ -89,27 +121,29 @@ class Ellipse extends FirePoint {
 		super(...agr)
 		this.a = 30 //长轴
 		this.b = 10 //短轴
-		// this.v=1//轴长变化速度
+		this.v=2//轴长变化速度
+		this.type=='ellipse'
 	}
 	getNextStatus() {
 		this._a = this.a + this.timeIndex * this.v
 		this._b = this.b + this.timeIndex * this.v
-		let nextx = this.originx + this._a * Math.cos(this.angle)
-		let nexty = this.originy + this._b * Math.sin(this.angle)
+		let nextx =this.originx +  (this._a * Math.cos(this.angle))*Math.cos(Math.PI/6)
+		let nexty =this.originy +  (this._b * Math.sin(this.angle))*Math.sin(Math.PI/6)
 		this.timeIndex++
+		this.timeIndex % 8 == 0 &&this.type=='ellipse'&& this.createParticleTrace([nextx,nextY])
 		return [nextx, nexty, this.size, this.getColor()]
 	}
 }
 // 粒子拖尾
-class ParticleTrace extends FirePoint{
-	constructor(...agr){
+class ParticleTrace extends FirePoint {
+	constructor(...agr) {
 		super(...agr)
-		this.v=0.2
-		this.keepTime=3
-		this.colorReduce=0.04
-		this.g=.02
-		this.size=0.08
-		this.type='ParticleTrace'
+		this.v = 0.2
+		this.keepTime = 3
+		this.colorReduce = 0.04
+		this.g = .02
+		this.size = 0.09
+		this.type = 'ParticleTrace'
 		// this.color= [...ColorBox[5]]
 	}
 
@@ -118,7 +152,7 @@ class ParticleTrace extends FirePoint{
 class ShootPoint extends FirePoint {
 	constructor(...agr) {
 		super(...agr)
-		this.v = Math.random() * 1 + 5
+		this.v = Math.random() * 1 +5
 		this.g = 0.01
 		this.angle = -Math.PI * (Math.random() * .1 + .45)
 		this.color = [...ColorBox[5]]
@@ -129,30 +163,40 @@ class ShootPoint extends FirePoint {
 	createFire(x, y) {
 		let n = this.t
 		let color = [Math.random() * 255, Math.random() * 255, Math.random() * 255, 1].map(item => parseInt(item))
+		let music = addMusic(0)
+		let obj=FirePoint
+		if(Math.random()>.6){
+			obj=Ellipse
+		}
 		while (n--) {
 			let angle = n / this.t * 2 * Math.PI
-			this.ctr.allFire.push(new FirePoint({
+			this.ctr.allFire.push(new obj({
 				originx: x,
 				originy: y,
 				angle,
 				color,
-				ctr:this.ctr
+				ctr: this.ctr
 			}))
 		}
 	}
 	// 重写获取下一状态的方法，为了生成爆炸特效
-	getNextStatus(){
-		let ans =this.move()
-		if (this.timeIndex > 150) {
+	getNextStatus() {
+		let ans = this.move()
+		if (this.timeIndex % 2 == 0) {
+			// this.angle=Math.PI-this.angle
+			// console.log(this.angle)
+		}
+		let tiem = window.innerHeight / this.v * 0.8
+		if (this.timeIndex > tiem) {
 			this.delFlag = true
 			this.createFire(ans[0], ans[1])
 		}
-		this.ctr.allFire.push(new ParticleTrace({
-			originx: ans[0]+Math.random()*10-5.5,
+		this.timeIndex % 2 == 0 && this.ctr.allFire.push(new ParticleTrace({
+			originx: ans[0] + Math.random() * 10 - 5.5,
 			originy: ans[1],
-			ctr:this.ctr,
-			color:[...this.color],
-			angle:this.angle
+			ctr: this.ctr,
+			color: [...this.color],
+			angle: this.angle
 		}))
 		return ans
 	}
@@ -176,7 +220,8 @@ class FireCtr {
 	}
 	drawAll() {
 		this.timeIndex++
-		if (this.timeIndex % 30 == 0) {
+		if (this.timeIndex % 50 == 0) {
+			let music = addMusic(1)
 			this.allFire.push(new ShootPoint({
 				originx: window.innerWidth / 2,
 				originy: window.innerHeight,
@@ -228,8 +273,11 @@ function fire(e) {
 	let fireCtr = new FireCtr(x, y, context) //生成一个烟花，能爆出5十个小点
 	let tick = () => {
 		// 生成拖尾的关键代码
+		// context.globalCompositeOperation='atop'
 		context.fillStyle = 'rgb(0,0,0,.18)' //使用一个模糊遮罩不断模糊前一秒绘制的东西
 		context.fillRect(0, 0, window.innerWidth, window.innerHeight)
+		// context.globalCompositeOperation='screen'
+
 		fireCtr.drawAll()
 		rafId = requestAnimationFrame(tick)
 	}
