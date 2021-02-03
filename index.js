@@ -165,9 +165,9 @@ class ShootPoint extends FirePoint {
 		let color = [Math.random() * 255, Math.random() * 255, Math.random() * 255, 1].map(item => parseInt(item))
 		let music = addMusic(0)
 		let obj=FirePoint
-		if(Math.random()>.6){
-			obj=Ellipse
-		}
+		// if(Math.random()>.6){
+		// 	obj=Ellipse
+		// }
 		while (n--) {
 			let angle = n / this.t * 2 * Math.PI
 			this.ctr.allFire.push(new obj({

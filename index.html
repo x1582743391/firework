@@ -6,14 +6,10 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>绽放烟火</title>
 	<style>
-		body,
-		div,
-		canvas {
+		* {
 			padding: 0;
 			margin: 0;
 		}
-	
-
 		.text {
 			position: absolute;
 			top: 0;
@@ -38,6 +34,12 @@
 			stroke-dashoffset: 10;
 			animation: 3s linear 0s drawing infinite;
 		}
+		.svg{
+			z-index: 3;
+			position: relative;
+			transform-origin: center;
+			transform:rotate(-30deg);
+		}
 
 		/* 绘画动画 */
 		@keyframes drawing {
@@ -46,13 +48,17 @@
 				stroke-dashoffset: 0;
 			}
 		}
+		.main{
+			height: 100vh;
+			width: 100vw;
+		}
 	</style>
 </head>
 
 <body>
-	<div style="position: relative;">
+	<div class="main" >
 		<div class="text">
-			<svg class="text">
+			<svg class="svg" >
 				<!-- 定义渐变颜色 -->
 				<defs>
 					<linearGradient id="geekColor">
@@ -69,12 +75,13 @@
 					</linearGradient>
 				</defs>
 
-				<text class="logo_text" x="-10" y="300" transform="rotate(-20)">
+				<text class="logo_text" x="30" y="30">
 					Happy New Year -_-
 				</text>
 			</svg>
 		</div>
-		<canvas id="drawing" style="background: linear-gradient(to top, #303B5D,#0F1831);z-index: 1;position: relative;">
+		<canvas id="drawing"
+			style="background: linear-gradient(to top, #303B5D,#0F1831);z-index: 1;">
 		</canvas>
 	</div>
 	<script src="./index.js"></script>
