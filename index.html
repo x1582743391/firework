@@ -5,13 +5,16 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>绽放烟火</title>
+	<link rel="stylesheet" href="./index.css">
 	<style>
 		* {
 			padding: 0;
 			margin: 0;
 		}
+
 		.text {
 			position: absolute;
+			overflow: hidden;
 			top: 0;
 			left: 0;
 			width: 100vw;
@@ -34,11 +37,12 @@
 			stroke-dashoffset: 10;
 			animation: 3s linear 0s drawing infinite;
 		}
-		.svg{
+
+		.svg {
 			z-index: 3;
 			position: relative;
 			transform-origin: center;
-			transform:rotate(-30deg);
+			transform: rotate(-30deg);
 		}
 
 		/* 绘画动画 */
@@ -48,17 +52,34 @@
 				stroke-dashoffset: 0;
 			}
 		}
-		.main{
+
+		.main {
 			height: 100vh;
 			width: 100vw;
+		}
+
+		.star1 {
+			z-index: inherit;
+			position: absolute;
+			top: 20px;
+			left: 10px;
+			width: 1px;
+			height: 1px;
+
+			/* border-radius:50%; */
+			background-color: transparent;
+			box-shadow: 30px 30px white, 10px 20px white;
 		}
 	</style>
 </head>
 
 <body>
-	<div class="main" >
+	<div class="main">
 		<div class="text">
-			<svg class="svg" >
+			<div id='stars'></div>
+			<div id='stars2'></div>
+			<div id='stars3'></div>
+			<svg class="svg">
 				<!-- 定义渐变颜色 -->
 				<defs>
 					<linearGradient id="geekColor">
@@ -80,8 +101,7 @@
 				</text>
 			</svg>
 		</div>
-		<canvas id="drawing"
-			style="background: linear-gradient(to top, #303B5D,#0F1831);z-index: 1;">
+		<canvas id="drawing" style="background: linear-gradient(to top, #303B5D,#0F1831);z-index: 1;">
 		</canvas>
 	</div>
 	<script src="./index.js"></script>

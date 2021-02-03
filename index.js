@@ -107,7 +107,7 @@ class FirePoint {
 	// 得到下秒的烟花点的状态
 	getNextStatus() {
 		let ans = this.move()
-		this.timeIndex % 8 == 0 && this.type == 'FirePoint' && this.createParticleTrace(ans)
+		this.timeIndex % 15 == 0 && this.type == 'FirePoint' && this.createParticleTrace(ans)
 		return ans
 	}
 	randomColor(v_r, v_x) {
@@ -158,7 +158,7 @@ class ShootPoint extends FirePoint {
 		this.color = [...ColorBox[5]]
 		this.type = 'ShootPoint'
 		this.keepTime = 1000000
-		this.t = parseInt(Math.random() * 10 + 50)
+		this.t = parseInt(Math.random() * 10 + 30)
 	}
 	createFire(x, y) {
 		let n = this.t
