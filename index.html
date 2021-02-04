@@ -60,6 +60,18 @@
 		.main {
 			height: 100vh;
 			width: 100vw;
+			position: relative;
+		}
+		.moon{
+			position: absolute;
+			top: 30px;
+			right: 30px;
+			width:1rem;
+			height:1rem;
+			z-index: 4;
+			background-color: rgb(255, 255, 255);
+			border-radius: 50%;
+			box-shadow:  0 0 2px 0.5rem #ffffff;
 		}
 
 		.star1 {
@@ -79,6 +91,7 @@
 
 <body>
 	<div class="main">
+		<div class="moon"></div>
 		<div class="text">
 			<div id='stars'></div>
 			<div id='stars2'></div>
