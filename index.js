@@ -24,17 +24,37 @@ function addMusic(type) {
 		// 爆炸
 		url = './爆炸.mp3'
 	}
-	// id = Math.random() + ''
-	// let ele = document.createElement('audio')
-	// ele.id = id
-	// ele.src = url
-	// ele.autoplay = "autoplay"
-	// ele.loop = false
-	// ele.addEventListener('ended', () => {
-	// 	console.log('移除')
-	// 	document.body.removeChild(ele)
-	// })
-	// document.body.appendChild(ele)
+	
+}
+class TextContent{
+	constructor({
+		originx,
+		originy,
+		context,
+		text
+	}){
+		this.originx=originx
+		this.originy=originy
+		this.context=context
+		this.text=text
+		this.keepTime=20
+		this.delFlag=false
+		this.timeIndex=0
+	}
+	drawing(){
+		this.context.font='bold 16px FiraCode'
+		this.context.textAlign='center'
+		this.context.fillText(this.text, this.originx,this.originy)
+	}
+	getNextStatus(){
+		this.drawing()
+		this.timeIndex++
+		if(this.timeIndex>this.keepTime){
+			this.delFlag=true
+		}
+		
+	}
+
 }
 
 // 一个烟花点，用来描述烟花店的属性和行为
@@ -45,6 +65,7 @@ class FirePoint {
 		angle = 0,
 		v = 0,
 		color = [],
+		context=null,
 		ctr = null
 	}) {
 		this.angle = angle //偏移角
@@ -59,11 +80,13 @@ class FirePoint {
 		this.type = 'FirePoint'
 		this.keepTime = 35 //颜色多少时间后会开始变淡
 		this.delFlag = false
+		this.context=context
 		this.colorReduce = .001
 		this.randomInit()
 		if (v) this.v = v
 		if (color) this.color = color
 	}
+
 	// 使用随机值初始化部分参数
 	randomInit() {
 		let v_x = 1,
@@ -73,6 +96,13 @@ class FirePoint {
 		this.v = v_r + v_y
 		this.size = Math.random() * 1 + 2
 		this.randomColor(v_r, v_x) //计算爆炸后一个烟花点的颜色
+	}
+	drawing() {
+		this.context.beginPath()
+		this.context.arc(this._curx, this._cury, this.size, 0, 2 * Math.PI, false)
+		this.context.closePath()
+		this.context.fillStyle = this.getColor()
+		this.context.fill()
 	}
 	getColor() {
 		if (this.timeIndex > this.keepTime) {
@@ -84,29 +114,29 @@ class FirePoint {
 		}
 		return ['rgb(', this.color.join(','), ')'].join('')
 	}
+	// 计算对应time内当前原点所在位置
 	move() {
 		// 使用三角函数计算出点击出周围点的圆心坐标
-		let nextX = this.originx + Math.cos(this.angle) * this.v * this.timeIndex //x方向没有重力分量
-		let nextY = this.originy + Math.sin(this.angle) * this.v * this.timeIndex + this.g * (this.timeIndex ** 2) / 2
+		this._curx= this.originx + Math.cos(this.angle) * this.v * this.timeIndex //x方向没有重力分量
+		this._cury = this.originy + Math.sin(this.angle) * this.v * this.timeIndex + this.g * (this.timeIndex ** 2) / 2
 		this.timeIndex++
-		return [nextX, nextY, this.size, this.getColor()]
-
 	}
-	createParticleTrace(ans){
+	createParticleTrace(){
 		this.ctr.allFire.push(new ParticleTrace({
-			originx: ans[0] + Math.random() * 10 - 5.5,
-			originy: ans[1],
+			originx: this._curx + Math.random() * 10 - 5.5,
+			originy: this._cury,
 			ctr: this.ctr,
 			color: [...this.color],
-			angle: this.angle
+			angle: this.angle,
+			context:this.context
 		}))
 
 	}
 	// 得到下秒的烟花点的状态
 	getNextStatus() {
-		let ans = this.move()
-		this.timeIndex % 15 == 0 && this.type == 'FirePoint' && this.createParticleTrace(ans)
-		return ans
+		this.move()
+		this.timeIndex % 15 == 0 && this.type == 'FirePoint' && this.createParticleTrace()
+		this.drawing()
 	}
 	randomColor(v_r, v_x) {
 		let index = parseInt(v_r * (ColorBox.length - 1) / v_x) //展示速度最快的颜色位于颜料盘最后面
@@ -125,11 +155,11 @@ class Ellipse extends FirePoint {
 	getNextStatus() {
 		this._a = this.a + this.timeIndex * this.v
 		this._b = this.b + this.timeIndex * this.v
-		let nextx =this.originx +  (this._a * Math.cos(this.angle))*Math.cos(Math.PI/6)
-		let nexty =this.originy +  (this._b * Math.sin(this.angle))*Math.sin(Math.PI/6)
+		this._curx=this.originx +  (this._a * Math.cos(this.angle))*Math.cos(Math.PI/6)
+		this._cury=this.originy +  (this._b * Math.sin(this.angle))*Math.sin(Math.PI/6)
 		this.timeIndex++
 		this.timeIndex % 8 == 0 &&this.type=='ellipse'&& this.createParticleTrace([nextx,nextY])
-		return [nextx, nexty, this.size, this.getColor()]
+		this.drawing()
 	}
 }
 // 粒子拖尾
@@ -142,7 +172,6 @@ class ParticleTrace extends FirePoint {
 		this.g = .02
 		this.size = 0.09
 		this.type = 'ParticleTrace'
-		// this.color= [...ColorBox[5]]
 	}
 
 }
@@ -158,45 +187,52 @@ class ShootPoint extends FirePoint {
 		this.keepTime = 1000000
 		this.t = parseInt(Math.random() * 10 + 30)
 	}
-	createFire(x, y) {
+	createFire() {
 		let n = this.t
 		let color = [Math.random() * 255, Math.random() * 255, Math.random() * 255+100, 1].map(item => parseInt(item))
-		let music = addMusic(0)
 		let obj=FirePoint
 		if(Math.random()>.6){
 			obj=Ellipse
 		}
+		let keyWords=['2021','力扣','Vue','新的一年','学习','加油！','小程序','webGL','Typescript']
+		let randomIndex=~~(Math.random()*(keyWords.length))
+		this.ctr.allFire.push(new TextContent({
+			originx:this._curx,
+			originy:this._cury,
+			context:this.context,
+			text:keyWords[randomIndex]
+		}))
 		while (n--) {
 			let angle = n / this.t * 2 * Math.PI
 			this.ctr.allFire.push(new obj({
-				originx: x,
-				originy: y,
+				originx: this._curx,
+				originy: this._cury,
 				angle,
 				color,
-				ctr: this.ctr
+				ctr: this.ctr,
+				context:this.context
 			}))
 		}
 	}
 	// 重写获取下一状态的方法，为了生成爆炸特效
 	getNextStatus() {
-		let ans = this.move()
-		if (this.timeIndex % 2 == 0) {
-			// this.angle=Math.PI-this.angle
-			// console.log(this.angle)
-		}
+		this.move()
 		let tiem = window.innerHeight / this.v * 0.8
 		if (this.timeIndex > tiem) {
 			this.delFlag = true
-			this.createFire(ans[0], ans[1])
+			this.createFire()
 		}
+		this.drawing()
 		this.timeIndex % 2 == 0 && this.ctr.allFire.push(new ParticleTrace({
-			originx: ans[0] + Math.random() * 10 - 5.5,
-			originy: ans[1],
+			originx: this._curx + Math.random() * 10 - 5.5,
+			originy: this._cury,
 			ctr: this.ctr,
 			color: [...this.color],
-			angle: this.angle
+			angle: this.angle,
+			context:this.context
 		}))
-		return ans
+
+
 	}
 }
 // 烟花控制器，负责生成和绘制烟花
@@ -208,29 +244,20 @@ class FireCtr {
 		this.timeIndex = 0
 		this.allFire = [] //存储一次烟花绽放作业中的带处理作业
 	}
-
-	drawing(nextX, nextY, size, color) {
-		this.context.beginPath()
-		this.context.arc(nextX, nextY, size, 0, 2 * Math.PI, false)
-		this.context.closePath()
-		this.context.fillStyle = color
-		this.context.fill()
-	}
 	drawAll() {
 		this.timeIndex++
 		if (this.timeIndex % 50 == 0) {
-			let music = addMusic(1)
 			this.allFire.push(new ShootPoint({
 				originx: window.innerWidth / 2,
 				originy: window.innerHeight,
-				ctr: this
+				ctr: this,
+				context:this.context
 			}))
 		}
 		let i = this.allFire.length
 		while (i--) {
 			const item = this.allFire[i]
-			const statusInfo = item.getNextStatus()
-			this.drawing.apply(this, statusInfo)
+			item.getNextStatus()
 			if (item.delFlag) {
 				this.allFire.splice(i, 1)
 			}
