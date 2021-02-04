@@ -24,19 +24,17 @@ function addMusic(type) {
 		// 爆炸
 		url = './爆炸.mp3'
 	}
-	id = Math.random() + ''
-	let ele = document.createElement('audio')
-	ele.id = id
-	ele.src = url
-	ele.autoplay = "autoplay"
-	ele.loop = false
-	ele.addEventListener('ended', () => {
-		console.log('移除')
-		document.body.removeChild(ele)
-	})
-	document.body.appendChild(ele)
-
-
+	// id = Math.random() + ''
+	// let ele = document.createElement('audio')
+	// ele.id = id
+	// ele.src = url
+	// ele.autoplay = "autoplay"
+	// ele.loop = false
+	// ele.addEventListener('ended', () => {
+	// 	console.log('移除')
+	// 	document.body.removeChild(ele)
+	// })
+	// document.body.appendChild(ele)
 }
 
 // 一个烟花点，用来描述烟花店的属性和行为
@@ -69,7 +67,7 @@ class FirePoint {
 	// 使用随机值初始化部分参数
 	randomInit() {
 		let v_x = 1,
-			v_y = 2.5,
+			v_y = 3.5,
 			v_r;
 		v_r = Math.random() * v_x
 		this.v = v_r + v_y
@@ -121,7 +119,7 @@ class Ellipse extends FirePoint {
 		super(...agr)
 		this.a = 30 //长轴
 		this.b = 10 //短轴
-		this.v=2//轴长变化速度
+		this.v=3//轴长变化速度
 		this.type=='ellipse'
 	}
 	getNextStatus() {
@@ -162,12 +160,12 @@ class ShootPoint extends FirePoint {
 	}
 	createFire(x, y) {
 		let n = this.t
-		let color = [Math.random() * 255, Math.random() * 255, Math.random() * 255, 1].map(item => parseInt(item))
+		let color = [Math.random() * 255, Math.random() * 255, Math.random() * 255+100, 1].map(item => parseInt(item))
 		let music = addMusic(0)
 		let obj=FirePoint
-		// if(Math.random()>.6){
-		// 	obj=Ellipse
-		// }
+		if(Math.random()>.6){
+			obj=Ellipse
+		}
 		while (n--) {
 			let angle = n / this.t * 2 * Math.PI
 			this.ctr.allFire.push(new obj({
@@ -243,7 +241,7 @@ window.addEventListener('resize', resizeDra, false)
 if (drawing.getContext) {
 	context = drawing.getContext('2d')
 }
-document.addEventListener('mousedown', fire)
+window.addEventListener('load', fire)
 
 function resizeDra() {
 	drawing.width = window.innerWidth
