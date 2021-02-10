@@ -17,7 +17,7 @@ function addMusic(type) {
 	// 发射
 	if (type == 1) {
 		url = './发射.mp3'
-		
+
 	} else {
 		// 爆炸
 		url = './爆炸.mp3'
@@ -27,9 +27,9 @@ function addMusic(type) {
 	ele.id = id
 	ele.src = url
 	ele.loop = false
-	ele.volume=0.3
-	ele.preload='auto'
-	ele.autoplay='autoplay'
+	ele.volume = 0.3
+	ele.preload = 'auto'
+	ele.autoplay = 'autoplay'
 	ele.addEventListener('ended', () => {
 		document.body.removeChild(ele)
 	})
@@ -93,7 +93,7 @@ class FirePoint {
 		this.delFlag = false
 		this.context = context
 		this.colorReduce = .07
-		this.flag=flag
+		this.flag = flag
 		this.randomInit()
 		if (v) this.v = v
 		if (color) this.color = color
@@ -160,8 +160,8 @@ class Ellipse extends FirePoint {
 		super(...agr)
 		this.a = 30 //长轴
 		this.b = 10 //短轴
-		this.v = Math.random()*.5+2 //轴长变化速度
-		this.type == 'ellipse'		
+		this.v = Math.random() * .5 + 2 //轴长变化速度
+		this.type == 'ellipse'
 	}
 	getNextStatus() {
 		this._a = this.a + this.timeIndex * this.v
@@ -169,7 +169,7 @@ class Ellipse extends FirePoint {
 		this._curx = this.originx + (this._a * Math.cos(this.angle)) * Math.cos(Math.PI / 6)
 		this._cury = this.originy + (this._b * Math.sin(this.angle)) * Math.sin(Math.PI / 6)
 		this.timeIndex++
-		this.timeIndex % 10 == 0 &&this.flag&&this.createParticleTrace()
+		this.timeIndex % 10 == 0 && this.flag && this.createParticleTrace()
 		this.drawing()
 	}
 }
@@ -183,8 +183,8 @@ class ParticleTrace extends FirePoint {
 		this.g = .02
 		this.size = 0.32
 		this.type = 'ParticleTrace'
-		if(agr[0].size){
-			this.size=agr[0].size
+		if (agr[0].size) {
+			this.size = agr[0].size
 		}
 	}
 
@@ -218,14 +218,14 @@ class ShootPoint extends FirePoint {
 		let color
 		addMusic(0)
 		while (n--) {
-			color= [Math.random() * 255, Math.random() * 255, Math.random() * 255 + 100, 1].map(item => parseInt(item))
+			color = [Math.random() * 255, Math.random() * 255, Math.random() * 255 + 100, 1].map(item => parseInt(item))
 			let angle = n / this.t * 2 * Math.PI
 			this.ctr.allFire.push(new obj({
 				originx: this._curx,
 				originy: this._cury,
 				angle,
 				color,
-				flag:(n%3)==0,
+				flag: (n % 3) == 0,
 				ctr: this.ctr,
 				context: this.context
 			}))
@@ -301,11 +301,16 @@ function clearDraw(x, y, x1, y1) {
 
 
 let rafId
-let audio=document.querySelector('#huahuo')
+let audio = document.querySelector('#huahuo')
 console.log(audio)
-document.addEventListener('WeixinJSBridgeReady',()=>{
+document.addEventListener('WeixinJSBridgeReady', () => {
 	audio.play()
 })
+document.addEventListener('click', () => {
+	audio.play()
+
+})
+
 function fire(e) {
 	clearDraw()
 	cancelAnimationFrame(rafId)
