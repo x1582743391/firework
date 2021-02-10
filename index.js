@@ -17,9 +17,7 @@ function addMusic(type) {
 	// 发射
 	if (type == 1) {
 		url = './发射.mp3'
-		if (Math.random() > 0.5) {
-			url = './发射2.mp3'
-		}
+		
 	} else {
 		// 爆炸
 		url = './爆炸.mp3'
