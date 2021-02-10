@@ -253,9 +253,7 @@ class ShootPoint extends FirePoint {
 }
 // 烟花控制器，负责生成和绘制烟花
 class FireCtr {
-	constructor(x, y, context) {
-		this.x = x
-		this.y = y
+	constructor(context) {
 		this.context = context
 		this.timeIndex = 0
 		this.allFire = [] //存储一次烟花绽放作业中的带处理作业
@@ -300,10 +298,6 @@ function clearDraw(x, y, x1, y1) {
 	}
 }
 
-function getMouseXY(e) {
-	e = e || window.event
-	return [e.clientX, e.clientY]
-}
 
 let rafId
 
@@ -312,9 +306,7 @@ function fire(e) {
 	cancelAnimationFrame(rafId)
 	let audio=document.querySelector('#huahuo')
 	audio.play()
-	let index = 0
-	let [x, y] = getMouseXY(e)
-	let fireCtr = new FireCtr(x, y, context) //生成一个烟花，能爆出5十个小点
+	let fireCtr = new FireCtr(context) //生成一个烟花，能爆出5十个小点
 	let tick = () => {
 		// 生成拖尾的关键代码
 		// context.globalCompositeOperation='atop'
