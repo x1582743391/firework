@@ -30,6 +30,7 @@ function addMusic(type) {
 	ele.src = url
 	ele.loop = false
 	ele.volume=0.3
+	ele.preload='auto'
 	ele.addEventListener('ended', () => {
 		document.body.removeChild(ele)
 	})
@@ -311,6 +312,8 @@ let rafId
 function fire(e) {
 	clearDraw()
 	cancelAnimationFrame(rafId)
+	let audio=document.querySelector('#huahuo')
+	audio.play()
 	let index = 0
 	let [x, y] = getMouseXY(e)
 	let fireCtr = new FireCtr(x, y, context) //生成一个烟花，能爆出5十个小点
