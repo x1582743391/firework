@@ -29,6 +29,7 @@ function addMusic(type) {
 	ele.loop = false
 	ele.volume=0.3
 	ele.preload='auto'
+	ele.autoplay='autoplay'
 	ele.addEventListener('ended', () => {
 		document.body.removeChild(ele)
 	})
@@ -300,11 +301,14 @@ function clearDraw(x, y, x1, y1) {
 
 
 let rafId
-
+let audio=document.querySelector('#huahuo')
+console.log(audio)
+document.addEventListener('WeixinJSBridgeReady',()=>{
+	audio.play()
+})
 function fire(e) {
 	clearDraw()
 	cancelAnimationFrame(rafId)
-	let audio=document.querySelector('#huahuo')
 	audio.play()
 	let fireCtr = new FireCtr(context) //生成一个烟花，能爆出5十个小点
 	let tick = () => {
