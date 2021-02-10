@@ -28,13 +28,13 @@ function addMusic(type) {
 	let ele = document.createElement('audio')
 	ele.id = id
 	ele.src = url
-	ele.autoplay = "autoplay"
 	ele.loop = false
 	ele.volume=0.3
 	ele.addEventListener('ended', () => {
 		document.body.removeChild(ele)
 	})
 	document.body.appendChild(ele)
+	ele.play()
 }
 class TextContent {
 	constructor({
