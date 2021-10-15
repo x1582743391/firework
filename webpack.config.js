@@ -8,14 +8,14 @@ module.exports = {
   },
   output: {
     filename: 'js/[index]-[hash:5].js',
-    path: resolve(__dirname, 'dist'),
+    path: resolve(__dirname, 'docs'),
     assetModuleFilename: 'assets/[name][ext][query]',
     clean: true
   },
   // webpack-dev-server need webpack-dev-server plugin
   devServer: {
     // 设置端口
-    static: './dist/',
+    static: './docs/',
     port: 1300,
     open: true,
     hot: true
